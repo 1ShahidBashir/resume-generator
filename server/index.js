@@ -24,7 +24,7 @@ app.post('/api/generate', async (req, res) => {
         }
 
         // Strict System Prompt
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         
         const prompt = `
         You are a LaTeX expert. Convert the following text into a professional one-page resume.
