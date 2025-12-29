@@ -2,77 +2,77 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+const axios = require('axios');
+const FormData = require('form-data');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Initialize Gemini
-// Ensure you set GEMINI_API_KEY in your .env file or Render Dashboard
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 app.post('/api/generate', async (req, res) => {
     try {
         const { userData } = req.body;
+        console.log("1. Received request...");
 
-        if (!userData) {
-            return res.status(400).json({ error: "User data is required" });
-        }
-
-        // Strict System Prompt
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        // --- PHASE 1: GENERATE LATEX WITH GEMINI ---
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
         
         const prompt = `
-        You are a LaTeX expert. Convert the following text into a professional one-page resume.
+        You are a professional Resume Writer. Convert this user data into a high-quality LaTeX resume.
+        USER DATA: "${userData}"
         
-        USER DATA:
-        "${userData}"
-
-        REQUIREMENTS:
-        1. Use the \\documentclass{article} class.
-        2. Use \\usepackage{geometry} to set margins to 0.5in.
-        3. Do NOT use markdown backticks (like \`\`\`latex).
-        4. Output ONLY the raw LaTeX code.
-        5. Keep it concise to fit within URL limits (under 3000 chars of code).
-        6. Use \\section*{} for headings to save space.
+        RULES:
+        1. Use \\documentclass[11pt]{article}
+        2. Use \\usepackage{geometry} [margin=0.75in]
+        3. Make it FILL the page (use \\vspace, \\section, and detailed bullet points).
+        4. Output ONLY valid LaTeX code. NO markdown backticks.
         `;
 
         const result = await model.generateContent(prompt);
-        const response = await result.response;
-        
-        // Cleanup response (Remove markdown if Gemini adds it)
-        let latexCode = response.text()
+        let latexCode = result.response.text()
             .replace(/```latex/g, "")
             .replace(/```/g, "")
             .trim();
 
-        console.log("Generated LaTeX length:", latexCode.length);
+        console.log("2. LaTeX Generated. Length:", latexCode.length);
 
-        // Encode for Latex-Online (Text compilation)
-        const encodedLatex = encodeURIComponent(latexCode);
-        const pdfUrl = `https://latexonline.cc/compile?text=${encodedLatex}`;
+        // --- PHASE 2: COMPILE PDF (THE PRO WAY) ---
+        // We create a "virtual file" and POST it to Latex-Online
+        const formData = new FormData();
+        // The API expects a file upload with key 'file' or just the file stream
+        formData.append('file', latexCode, 'resume.tex');
 
-        res.json({ success: true, pdfUrl });
+        console.log("3. Sending to Compiler...");
+
+        const compilerResponse = await axios.post('https://latexonline.cc/compile', formData, {
+            headers: {
+                ...formData.getHeaders(), // Important: Sets multipart/form-data boundaries
+            },
+            responseType: 'arraybuffer' // Important: We expect a PDF file (binary), not text
+        });
+
+        console.log("4. Compilation Success!");
+
+        // --- PHASE 3: STREAM BACK TO CLIENT ---
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename="resume.pdf"');
+        res.send(compilerResponse.data);
 
     } catch (error) {
-        console.error("Error generating resume:", error);
-        res.status(500).json({ error: "Failed to generate resume." });
+        console.error("Error details:", error.response?.data?.toString() || error.message);
+        res.status(500).json({ error: "Generation failed. Ensure text is valid." });
     }
 });
 
-// --- DEPLOYMENT: SERVE STATIC FILES ---
-// Point to the client's 'dist' folder (created after build)
+// Serve Frontend
 app.use(express.static(path.join(__dirname, '../client/dist')));
-
-// Catch-all handler for React Routing
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../client/dist/index.html'));
 });
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
