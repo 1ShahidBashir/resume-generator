@@ -20,7 +20,7 @@ app.post('/api/generate', async (req, res) => {
         console.log("1. Received request...");
 
         // --- PHASE 1: GENERATE LATEX WITH GEMINI ---
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         
         const prompt = `
         You are a professional Resume Writer. Convert this user data into a high-quality LaTeX resume.
