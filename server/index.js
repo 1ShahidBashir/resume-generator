@@ -29,7 +29,8 @@ app.post('/api/generate', async (req, res) => {
         1. Use \\documentclass[11pt]{article}
         2. Use \\usepackage{geometry} [margin=0.75in]
         3. Make it FILL the page (use \\vspace, \\section, and detailed bullet points).
-        4. Output ONLY valid LaTeX code. NO markdown backticks.
+        4. Output ONLY valid LaTeX code. NO markdown backticks. It should be full proof since we will be using node-latex for compilation
+        5. Resume should be one page by default DO NOT make it bigger unless stated
         `;
 
         const result = await model.generateContent(prompt);
