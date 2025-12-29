@@ -1,42 +1,132 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+/* App.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #050505; /* Deepest Dark */
+  color: #ffffff;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app-container {
+  max-width: 800px;
+  margin: 60px auto;
+  padding: 40px;
+  animation: fadeIn 0.8s ease-in-out;
+}
+
+h1 {
   text-align: center;
+  font-weight: 200; /* Super Slim */
+  letter-spacing: 2px;
+  margin-bottom: 40px;
+  color: #e0e0e0;
+  text-transform: uppercase;
+  font-size: 2.5rem;
+  text-shadow: 0px 0px 20px rgba(255, 255, 255, 0.1);
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+textarea {
+  width: 100%;
+  background-color: #0f0f0f;
+  color: #f0f0f0;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 20px;
+  font-family: 'Inter', monospace; /* Monospace for coding feel */
+  font-weight: 300;
+  font-size: 16px;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+  transition: all 0.3s ease;
+  box-sizing: border-box; /* Fix padding issues */
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+textarea:focus {
+  border-color: #666;
+  background-color: #141414;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
 }
 
-.card {
-  padding: 2em;
+textarea::placeholder {
+  color: #555;
+  font-weight: 300;
 }
 
-.read-the-docs {
-  color: #888;
+.action-btn {
+  padding: 20px;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 1px;
+  background-color: #ededed; /* Stark White Contrast */
+  color: #000;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+}
+
+.action-btn:hover:not(:disabled) {
+  background-color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+}
+
+.action-btn:disabled {
+  background-color: #333;
+  color: #666;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.error-msg {
+  color: #ff4d4d;
+  font-weight: 300;
+  text-align: center;
+  background: rgba(255, 77, 77, 0.1);
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 77, 77, 0.2);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ... existing code ... */
+
+.footer {
+  margin-top: 60px;
+  text-align: center;
+  font-size: 14px;
+  color: #444; /* Very subtle grey */
+  font-weight: 300;
+  letter-spacing: 1px;
+}
+
+.heart {
+  color: #e31b23; /* Deep Red */
+  display: inline-block;
+  padding: 0 4px;
+  animation: heartbeat 1.5s infinite;
+}
+
+@keyframes heartbeat {
+  0% { transform: scale(1); }
+  5% { transform: scale(1.2); }
+  10% { transform: scale(1); }
+  15% { transform: scale(1.3); }
+  50% { transform: scale(1); }
+  100% { transform: scale(1); }
 }
