@@ -2,8 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-const axios = require('axios');
-const FormData = require('form-data');
+const latex = require('node-latex'); // <--- NEW IMPORT
 require('dotenv').config();
 
 const app = express();
@@ -20,7 +19,7 @@ app.post('/api/generate', async (req, res) => {
         console.log("1. Received request...");
 
         // --- PHASE 1: GENERATE LATEX WITH GEMINI ---
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); // Use 1.5-flash for stability
         
         const prompt = `
         You are a professional Resume Writer. Convert this user data into a high-quality LaTeX resume.
@@ -41,31 +40,39 @@ app.post('/api/generate', async (req, res) => {
 
         console.log("2. LaTeX Generated. Length:", latexCode.length);
 
-        // --- PHASE 2: COMPILE PDF (THE PRO WAY) ---
-        // We create a "virtual file" and POST it to Latex-Online
-        const formData = new FormData();
-        // The API expects a file upload with key 'file' or just the file stream
-        formData.append('file', latexCode, 'resume.tex');
+        // --- PHASE 2: COMPILE LOCALLY (THE PRO WAY) ---
+        console.log("3. Starting Local Compilation...");
 
-        console.log("3. Sending to Compiler...");
+        const options = {
+            inputs: '.', // Allow includes if needed
+            cmd: 'pdflatex',
+            passes: 2, // Run twice to fix reference/page numbers if needed
+            errorLogs: 'errors.log' // Useful for debugging
+        };
 
-        const compilerResponse = await axios.post('https://latexonline.cc/compile', formData, {
-            headers: {
-                ...formData.getHeaders(), // Important: Sets multipart/form-data boundaries
-            },
-            responseType: 'arraybuffer' // Important: We expect a PDF file (binary), not text
-        });
-
-        console.log("4. Compilation Success!");
-
-        // --- PHASE 3: STREAM BACK TO CLIENT ---
+        // node-latex uses Streams. We pipe the LaTeX string IN, and pipe the PDF OUT.
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', 'attachment; filename="resume.pdf"');
-        res.send(compilerResponse.data);
+
+        const pdfStream = latex(latexCode, options);
+
+        pdfStream.pipe(res);
+
+        pdfStream.on('error', (err) => {
+            console.error("LaTeX Compilation Error:", err);
+            // If headers haven't been sent, send 500. Otherwise, the stream just breaks.
+            if (!res.headersSent) {
+                res.status(500).json({ error: "Compilation failed on server." });
+            }
+        });
+
+        pdfStream.on('finish', () => {
+            console.log("4. PDF Sent to Client!");
+        });
 
     } catch (error) {
-        console.error("Error details:", error.response?.data?.toString() || error.message);
-        res.status(500).json({ error: "Generation failed. Ensure text is valid." });
+        console.error("Server Error:", error);
+        if (!res.headersSent) res.status(500).json({ error: "Internal Server Error" });
     }
 });
 
